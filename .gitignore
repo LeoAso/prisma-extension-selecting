@@ -1,0 +1,12 @@
+node_modules
+dist
+logs
+*.log*
+*.local
+*.zip
+*.tgz
+.env
+.eslintcache
+prisma/*
+!prisma/schema.prisma
+

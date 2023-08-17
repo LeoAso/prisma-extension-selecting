@@ -1,0 +1,41 @@
+{
+  "name": "prisma-extension-selecting",
+  "version": "0.1.0",
+  "description": "Prisma client extension for predefining selections",
+  "license": "MIT",
+  "author": "Leo Aso",
+  "repository": "github:LeoAso/prisma-extension-selecting",
+  "homepage": "https://github.com/LeoAso/prisma-extension-selecting#readme",
+  "keywords": [
+    "Prisma",
+    "@prisma/client",
+    "extension",
+    "select",
+    "include"
+  ],
+  "bugs": {
+    "url": "https://github.com/LeoAso/prisma-extension-selecting/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rimraf --glob dist prisma/test.db *.tgz",
+    "prebuild": "npm run clean",
+    "pretest": "prisma db push",
+    "posttest": "rimraf prisma/test.db",
+    "prepublishOnly": "npm run test && npm run build",
+    "test": "jest",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.3",
+    "jest": "^29.6.2",
+    "prisma": "^5.1.1",
+    "rimraf": "^5.0.1",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5.0.0"
+  }
+}
