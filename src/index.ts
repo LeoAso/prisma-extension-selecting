@@ -1,58 +1,46 @@
-import { Prisma } from "@prisma/client"
-import { Operation } from "@prisma/client/runtime/library"
+import { Prisma as P } from "@prisma/client"
 
-type Selection<T> = Partial<
-  Pick<Prisma.Args<T, "findMany">, "select" | "include">
->
+const hasSelect = [
+  "findMany",
+  "findFirst",
+  "findUnique",
+  "findFirstOrThrow",
+  "findUniqueOrThrow",
+  "create",
+  "update",
+  "upsert",
+  "delete",
+] as const
 
-type SFunction<T, S extends Selection<T>, O extends Operation> = (
-  args: Omit<Prisma.Args<T, O>, "select" | "include">
-) => Prisma.PrismaPromise<Prisma.Result<T, S, O>>
+type HasSelect = (typeof hasSelect)[number]
+type SI = "select" | "include"
+type Selection<M> = Pick<P.Args<M, "findMany">, SI>
+type Args<M, K extends HasSelect> = Omit<P.Args<M, K>, SI>
+type Result<M, S, K extends HasSelect> = P.PrismaPromise<P.Result<M, S, K>>
 
-/** Applies predefined values of `select` and `include` to a Prisma model function. */
-function sFunction<T, S extends Selection<T>, O extends Operation>(
-  model: T,
-  selection: S,
-  operation: O
-): SFunction<T, S, O> {
-  return args => (model as any)[operation]({ ...args, ...selection })
+export type Selecting<M, S> = { selection: S } & {
+  [K in keyof M]: K extends HasSelect
+    ? M[K] extends () => any
+      ? (args?: Args<M, K>) => Result<M, S, K>
+      : (args: Args<M, K>) => Result<M, S, K>
+    : M[K]
 }
-
-function sFunctions<T, S extends Selection<T>>(model: T, s: S) {
-  return {
-    selection: s,
-    findMany: sFunction(model, s, "findMany"),
-    findFirst: sFunction(model, s, "findFirst"),
-    findUnique: sFunction(model, s, "findUnique"),
-    findFirstOrThrow: sFunction(model, s, "findFirstOrThrow"),
-    findUniqueOrThrow: sFunction(model, s, "findUniqueOrThrow"),
-    create: sFunction(model, s, "create"),
-    update: sFunction(model, s, "update"),
-    upsert: sFunction(model, s, "upsert"),
-    delete: sFunction(model, s, "delete"),
-  }
-}
-
-type SFunctions<T, S extends Selection<T>> = ReturnType<typeof sFunctions<T, S>>
-
-export type ModelSelecting<T, S extends Selection<T>> = SFunctions<T, S> &
-  Omit<T, keyof SFunctions<T, S>>
 
 /** Takes a Prisma model and returns a version with predefined values of `select` and `include`. */
-export function modelSelecting<T, S extends Selection<T>>(
-  model: T,
-  selection: S
-): ModelSelecting<T, S> {
-  const sf = sFunctions(model, selection) as any
+export function modelSelecting<T, S>(model: T, selection: S): Selecting<T, S> {
+  const f: any = { selection }
+  for (const k of hasSelect) {
+    f[k] = (a: any) => (model as any)[k]({ ...a, ...selection })
+  }
   return new Proxy(model as any, {
-    get(target, prop) {
-      return sf[prop] || target[prop]
+    get(m, k, r) {
+      return k in f ? f[k] : Reflect.get(m, k, r)
     },
   })
 }
 
 /** Prisma extension that adds a `selecting` function to each model for predefining `select` and `include`. */
-export const selecting = Prisma.defineExtension({
+export const selecting = P.defineExtension({
   name: "selecting",
   model: {
     $allModels: {

@@ -94,7 +94,7 @@ test("findFirstOrThrow (not found)", async () => {
 })
 
 test("findMany (all)", async () => {
-  const found = await users.findMany({})
+  const found = await users.findMany()
   const sorted = found.sort((a, b) => a.name.localeCompare(b.name))
   expect(sorted).toEqual([
     { id, name: "Donatello", posts: [] },
