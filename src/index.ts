@@ -12,9 +12,12 @@ const hasSelect = [
   "delete",
 ] as const
 
+const hasOrderBy = ["findMany", "findFirst", "findFirstOrThrow"] as const
+
 type HasSelect = (typeof hasSelect)[number]
 type SI = "select" | "include"
-type Selection<M> = Pick<P.Args<M, "findMany">, SI>
+type SIO = "select" | "include" | "orderBy"
+type Selection<M> = Pick<P.Args<M, "findMany">, SIO>
 type Args<M, K extends HasSelect> = Omit<P.Args<M, K>, SI>
 type Result<M, S, K extends HasSelect> = P.PrismaPromise<P.Result<M, S, K>>
 
@@ -27,10 +30,20 @@ export type Selecting<M, S> = { selection: S } & {
 }
 
 /** Takes a Prisma model and returns a version with predefined values of `select` and `include`. */
-export function modelSelecting<T, S>(model: T, selection: S): Selecting<T, S> {
+export function modelSelecting<T, S extends Selection<T>>(
+  model: T,
+  selection: S
+): Selecting<T, S> {
   const f: any = { selection }
   for (const k of hasSelect) {
-    f[k] = (a: any) => (model as any)[k]({ ...a, ...selection })
+    f[k] = (a: any) => {
+      const operation = (model as any)[k]
+      if (hasOrderBy.includes(k as any)) {
+        return operation({ ...selection, ...a })
+      }
+      const { orderBy: _, ...s } = selection
+      return operation({ ...s, ...a })
+    }
   }
   return new Proxy(model as any, {
     get(m, k, r) {

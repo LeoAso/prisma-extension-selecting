@@ -1,6 +1,6 @@
 {
   "name": "prisma-extension-selecting",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Prisma client extension for predefining selections",
   "license": "MIT",
   "author": "Leo Aso",

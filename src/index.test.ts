@@ -14,6 +14,7 @@ const users = p.user.selecting({
       },
     },
   },
+  orderBy: { name: "asc" },
 })
 
 const id = expect.any(Number)
@@ -95,8 +96,7 @@ test("findFirstOrThrow (not found)", async () => {
 
 test("findMany (all)", async () => {
   const found = await users.findMany()
-  const sorted = found.sort((a, b) => a.name.localeCompare(b.name))
-  expect(sorted).toEqual([
+  expect(found).toEqual([
     { id, name: "Donatello", posts: [] },
     { id, name: "Leonardo", posts: [] },
     { id, name: "Michaelangelo", posts: [] },
